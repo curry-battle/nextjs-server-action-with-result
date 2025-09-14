@@ -1,95 +1,96 @@
-import Image from "next/image";
+"use client";
+
+import { getDog } from "@/actions/dog";
+import type { Dog } from "@/app/types/dog";
+import type { ActionError, CustomError } from "@/app/types/errors";
+import { useState } from "react";
 import styles from "./page.module.css";
 
 export default function Home() {
+  const [dog, setDog] = useState<Dog | undefined>(undefined);
+  const [err, setErr] = useState<ActionError | CustomError | undefined>(
+    undefined,
+  );
+
+  const handleClick = async (dogId: number) => {
+    const result = await getDog(dogId);
+
+    if (result.err) {
+      setDog(undefined);
+      setErr(result.error);
+      return;
+    }
+
+    setDog(result.value);
+    setErr(undefined);
+  };
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+        <h1>Server Action Demo</h1>
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+          }}
+        >
+          <button type="button" onClick={() => handleClick(1)}>
+            get No.1
+          </button>
+          <button type="button" onClick={() => handleClick(2)}>
+            get No.2
+          </button>
+          <button type="button" onClick={() => handleClick(3)}>
+            get No.3
+          </button>
+          <button type="button" onClick={() => handleClick(4)}>
+            get No.4
+          </button>
+          <button type="button" onClick={() => handleClick(666)}>
+            get No.666
+          </button>
+          <button type="button" onClick={() => handleClick(999)}>
+            get Not Found
+          </button>
         </div>
+
+        {dog && (
+          <div>
+            <h2>Dog Info:</h2>
+            <p>
+              <b>Name:</b> {dog.name}
+            </p>
+            <p>
+              <b>Age:</b> {dog.age}
+            </p>
+            <p>
+              <b>Species:</b> {dog.breed.english} ({dog.breed.japanese})
+            </p>
+            {dog.remarks && (
+              <p>
+                <b>Remarks:</b> {dog.remarks}
+              </p>
+            )}
+
+            <pre>{JSON.stringify(dog, null, 2)}</pre>
+          </div>
+        )}
+
+        {err && (
+          <div>
+            <h2>Error:</h2>
+            <p>
+              {/* Errorを継承したCustomErrorの場合、サーバ → クライアントのシリアライズ時にcodeが欠損する */}
+              {err.code} - {err.message}
+            </p>
+
+            <pre>{JSON.stringify(err, null, 2)}</pre>
+          </div>
+        )}
       </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }

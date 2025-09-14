@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Next.js の Server -> Clientの処理でResult型を使うときに気をつけたいこと
+
+Next.jsのServer側の処理 ServerComponent内での処理やServerActionを用いると、ServerからClientにデータを渡すことができる。
+
+この際に渡すデータはPlainなオブジェクトである必要があり、メソッドをもたせたりするとサーバ側でのシリアライズ時にエラーになる。  
+`Only plain objects can be passed to Client Components from Server Components.`
+
+クラスのインスタンスを渡そうとする場合もエラーになったりプロパティが欠損したりする。
+
+表題の通り「tsでもResult型を使うぞ〜」と気合を入れコードを書き、人もコンパイラも上記の点を見過ごしたまま開発を進めて、最終的に上記のエラーを見て落ち込むことがあるかもしれない。
+
+今回取り上げたいのがResult型に使いがちなclass Errorをextendsしたclassになる。
+
+例えばこういうclassはコメントの通りシリアライズで`code`が欠損する！欠損するだけでエラーにはならない。何かメソッドをもたせればエラーになる。
+
+```ts
+export class CustomError extends Error {
+  // Seerver → Client でシリアライズされる際に code プロパティは落とされる
+  code: number;
+
+  constructor(message: string, code: number = 500) {
+    super(message);
+    this.name = "CustomError";
+    this.code = code;
+  }
+}
+```
+
+ということで今回のようなシーンではこういうエラーオブジェクトを別途用意してResultの中ではそれを使うのがいいんじゃないかなぁ
+
+```ts
+export type ActionError = {
+  name: string;
+  message: string;
+  code: number;
+};
+```
+
+## 補足
+
+React, Next.jsの内部構造のことをまるで理解していないが、Next.jsのリポジトリでERRORのシリアライズに関してDeepwikiに質問した
+
+前段としてどこから呼ばれるのか理解していないが、`renderModel` を起点として `renderModelDestructive` が呼ばれて、その中で `Only plain objects can be passed to Client Components from Server Components.` が発生している。
+
+https://github.com/vercel/next.js/blob/91601608/packages/next/src/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-server.node.unbundled.development.js#L2338-L2343
+
+https://github.com/vercel/next.js/blob/91601608/packages/next/src/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-server.node.unbundled.development.js#L2398
+
+Errorのインスタンスは事情が特殊で別途特殊なシリアライズ処理をされる
+
+https://github.com/vercel/next.js/blob/91601608/packages/next/src/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-server.node.development.js#L2551
+
+https://github.com/vercel/next.js/blob/91601608af4d1da55e4652e8304426d2882cece3/packages/next/src/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-server.node.development.js#L2759-L2782
+
+ここで明確にcodeが落ちていることがわかる
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm i
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

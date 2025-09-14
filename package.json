@@ -1,5 +1,5 @@
 {
-  "name": "server-action-with-result",
+  "name": "nextjs-server-action-with-result",
   "version": "0.1.0",
   "private": true,
   "scripts": {

@@ -1,0 +1,16 @@
+{
+	"editor.defaultFormatter": "biomejs.biome",
+	"editor.codeActionsOnSave": {
+	  "source.fixAll.biome": "explicit",
+	  "quickfix.biome": "explicit",
+	  "source.organizeImports": "explicit",
+	  "source.addMissingImports": "explicit"
+	},
+	"[javascript][javascriptreact][typescript][typescriptreact][css][json]": {
+	  "editor.defaultFormatter": "biomejs.biome",
+	  "editor.formatOnSave": true
+	},
+  
+	// importでの相対パス禁止
+	"typescript.preferences.importModuleSpecifier": "non-relative",
+}
